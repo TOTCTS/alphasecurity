@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--
+    namespace命名空间，作用就是对SQL进行分类话管理，理解SQL隔离
+    注意：使用mapper代理方法开发，namespace必须等于mapper接口的全路径。
+-->
+
+<mapper namespace="User">
+    
+    <resultMap id="userMap" type="User">
+        <id column="username" property="username"/>
+        <result column="id" property="id"/>
+        <result column="password" property="password"/>
+        <result column="enable" property="enable"/>
+        <result column="account_non_expired" property="accountNonExpired"/>
+        <result column="account_non_locked" property="accountNonLocked"/>
+        <result column="credentials_non_expired" property="credentialsNonExpired"/>
+        <result column="create_time" property="createTime"/>
+        <result column="remark" property="remark"/>
+    </resultMap>
+
+    <sql id="baseQuerySegment">
+        <if test="id != null">
+            AND id = #{id}
+        </if>
+        <if test="!org.best.alpha.util.Assert$$isEmpty(nameLike)">
+            AND username LIKE CONCAT(CONCAT('%',#{nameLike}),'%')
+        </if>
+        <if test="fromTime != null">
+            AND create_time &gt;= #{fromTime}
+        </if>
+        <if test="toTime != null">
+            AND create_time &lt;= #{toTime}
+        </if>
+    </sql>
+
+    <sql id="queryPageList">
+        <if test="startIndex != null &amp;&amp; pageSize != null">
+            LIMIT #{startIndex}, #{pageSize}
+        </if>
+    </sql>
+
+    <sql id="querySegment">
+        <where>
+            <if test="!org.best.alpha.util.Assert$$isEmpty(username)">
+                AND username = #{username}
+            </if>
+            <if test="enable != null">
+                AND  enable = #{enable}
+            </if>
+            <if test="accountNonExpired != null">
+                AND account_non_expired = #{accountNonExpired}
+            </if>
+            <if test="accountNonLocked != null">
+                AND account_non_locked = #{accountNonLocked}
+            </if>
+            <if test="credentialsNonExpired != null">
+                AND credentials_non_expired =#{credentialsNonExpired}
+            </if>
+            <include refid="baseQuerySegment"/>
+        </where>
+        <include refid="queryPageList"/>
+    </sql>
+
+    <insert id="create" parameterType="User">
+        INSERT INTO users(username, password,create_time, remark)
+        VALUES (#{username}, #{password}, #{createTime}, #{remark})
+    </insert>
+
+    <delete id="delete" parameterType="java.lang.Long">
+        DELETE FROM users WHERE id = #{id}
+    </delete>
+
+    <update id="update" parameterType="User">
+        UPDATE users
+        <set>
+            <if test="!org.best.alpha.util.Assert$$isEmpty(password)">
+                password = #{password},
+            </if>
+            <if test="enable != null">
+                enable = #{enable},
+            </if>
+            <if test="accountNonExpired != null">
+                account_non_expired = #{accountNonExpired},
+            </if>
+            <if test="accountNonLocked != null">
+                account_non_locked = #{accountNonLocked},
+            </if>
+            <if test="credentialsNonExpired != null">credentials_non_expired = #{credentialsNonExpired}</if>
+        </set>
+        WHERE username = ${username}
+    </update>
+
+    <select id="get" parameterType="java.lang.Long" resultMap="userMap">
+        SELECT * FROM users AS u WHERE u.id = #{id}
+    </select>
+
+    <select id="getAll" parameterType="UserSo" resultMap="userMap">
+        SELECT * FROM users
+        <include refid="querySegment"/>
+    </select>
+
+    <select id="getPageList" parameterType="UserSo" resultMap="userMap">
+        SELECT * FROM users
+        <include refid="querySegment"/>
+    </select>
+
+    <select id="getCount" resultType="java.lang.Long">
+        SELECT COUNT(*) FROM users
+    </select>
+
+    <select id="getByUsername" parameterType="java.lang.String" resultMap="userMap">
+        SELECT * FROM users AS u WHERE u.username = #{username}
+    </select>
+
+</mapper>

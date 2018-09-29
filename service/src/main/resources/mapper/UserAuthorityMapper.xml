@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--
+    namespace命名空间，作用就是对SQL进行分类话管理，理解SQL隔离
+    注意：使用mapper代理方法开发，namespace必须等于mapper接口的全路径。
+-->
+
+<mapper namespace="UserAuthority">
+    
+    <resultMap id="userAuthorityMap" type="UserAuthority">
+        <id column="id" property="id"/>
+        <result column="username" property="username"/>
+        <result column="authority_id" property="authorityId"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <sql id="baseQuerySegment">
+        <if test="id != null">
+            AND id = #{id}
+        </if>
+        <if test="!org.best.alpha.util.Assert$$isEmpty(nameLike)">
+            AND username LIKE CONCAT(CONCAT('%',#{nameLike}),'%')
+        </if>
+        <if test="fromTime != null">
+            AND create_time &gt;= #{fromTime}
+        </if>
+        <if test="toTime != null">
+            AND create_time &lt;= #{toTime}
+        </if>
+    </sql>
+
+    <sql id="queryPageList">
+        <if test="startIndex != null &amp;&amp; pageSize != null">
+            LIMIT #{startIndex}, #{pageSize}
+        </if>
+    </sql>
+
+    <sql id="querySegment">
+        <if test="!org.best.alpha.util.Assert$$isEmpty(username)">
+            AND username = #{username}
+        </if>
+        <if test="authorityId != null">
+            AND authority_id = #{authorityId}
+        </if>
+    </sql>
+
+    <insert id="create" parameterType="UserAuthority">
+        <selectKey keyProperty="id" resultType="java.lang.Long" order="AFTER">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
+        INSERT INTO user_authorities(username, authority_id,create_time)
+        VALUES (#{username}, #{authorityId}, #{createTime})
+    </insert>
+
+    <delete id="delete" parameterType="java.lang.Long">
+        DELETE  FROM user_authorities AS  ua WHERE ua.id = #{id}
+    </delete>
+
+    <update id="update" parameterType="UserAuthority">
+        UPDATE user_authorities
+        <set>
+            <if test="!org.best.alpha.util.Assert$$isEmpty(username)">
+                username = #{username},
+            </if>
+            <if test="authorityId != null">
+                authority_id = #{authorityId}
+            </if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <select id="get" parameterType="java.lang.Long" resultMap="userAuthorityMap">
+        SELECT * FROM user_authorities AS ua WHERE ua.id = #{id}
+    </select>
+
+    <select id="getAll" parameterType="UserAuthoritySo" resultMap="userAuthorityMap">
+        SELECT * FROM user_authorities AS ua
+        <include refid="querySegment"/>
+    </select>
+
+    <select id="getPageList" parameterType="UserAuthoritySo" resultMap="userAuthorityMap">
+        SELECT * FROM user_authorities AS ua
+        <include refid="querySegment"/>
+    </select>
+
+    <select id="getCount" parameterType="UserAuthoritySo" resultType="java.lang.Long">
+        SELECT COUNT(*) FROM user_authorities AS ua
+        <include refid="queryPageList"/>
+    </select>
+
+    <select id="getUserAuthoritiesByUsername" parameterType="java.lang.String" resultMap="userAuthorityMap">
+        SELECT * FROM users AS u WHERE u.username = #{username}
+    </select>
+
+    <select id="deleteUserAuthoritiesByUsername" parameterType="java.lang.String">
+        DELETE FROM user_authorities AS ua WHERE ua.username = #{username}
+    </select>
+</mapper>

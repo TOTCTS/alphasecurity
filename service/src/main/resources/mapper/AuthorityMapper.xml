@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--
+    namespace命名空间，作用就是对SQL进行分类话管理，理解SQL隔离
+    注意：使用mapper代理方法开发，namespace必须等于mapper接口的全路径。
+-->
+
+<mapper namespace="Authority">
+    
+    <resultMap id="authorityMap" type="Authority">
+        <id column="id" property="id"/>
+        <result column="authority" property="authority"/>
+        <result column="default_authority" property="defaultAuthority"/>
+        <result column="create_time" property="createTime"/>
+        <result column="remark" property="remark"/>
+    </resultMap>
+
+    <sql id="baseQuerySegment">
+        <if test="id != null">
+            AND id = #{id}
+        </if>
+        <if test="!org.best.alpha.util.Assert$$isEmpty(nameLike)">
+            AND username LIKE CONCAT(CONCAT('%',#{nameLike}),'%')
+        </if>
+        <if test="fromTime != null">
+            AND create_time &gt;= #{fromTime}
+        </if>
+        <if test="toTime != null">
+            AND create_time &lt;= #{toTime}
+        </if>
+    </sql>
+
+    <sql id="queryPageList">
+        <if test="startIndex != null &amp;&amp; pageSize != null">
+            LIMIT #{startIndex}, #{pageSize}
+        </if>
+    </sql>
+
+    <sql id="querySegment">
+        <if test="!org.best.alpha.util.Assert$$isEmpty(authority)">
+            AND authority = #{authority}
+        </if>
+        <if test="defaultAuthority != null">
+            AND default_authority = #{defaultAuthority}
+        </if>
+    </sql>
+
+    <insert id="create" parameterType="Authority">
+        <selectKey keyProperty="id" resultType="java.lang.Long" order="AFTER">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
+        INSERT INTO authorities(authority, default_authority,create_time, remark)
+        VALUES (#{authority}, #{defaultAuthority}, #{createTime}, #{remark})
+    </insert>
+
+    <delete id="delete" parameterType="java.lang.Long">
+        DELETE FROM authorities AS a WHERE a.id = #{id}
+    </delete>
+
+    <update id="update" parameterType="Authority">
+        UPDATE authorities
+        <set>
+            <if test="!org.best.alpha.util.Assert$$isEmpty(authority)">
+                authority = #{authority},
+            </if>
+            <if test="!org.best.alpha.util.Assert$$isEmpty(remark)">
+                remark = #{remark}
+            </if>
+        </set>
+    </update>
+
+    <select id="get" parameterType="java.lang.Long" resultMap="authorityMap">
+        SELECT * FROM authorities AS a WHERE a.id = #{id}
+    </select>
+
+    <select id="getAll" parameterType="UserSo" resultMap="authorityMap">
+        SELECT * FROM authorities
+        <include refid="querySegment"/>
+    </select>
+
+    <select id="getPageList" parameterType="UserSo" resultMap="authorityMap">
+        SELECT * FROM authorities
+        <include refid="querySegment"/>
+    </select>
+
+    <select id="getCount" resultType="java.lang.Long">
+        SELECT COUNT(*) FROM authorities;
+    </select>
+
+    <select id="getByName" parameterType="java.lang.String" resultMap="authorityMap">
+        SELECT * FROM authorities AS a WHERE a.authority = #{name}
+    </select>
+
+    <select id="getByUsername" resultType="java.lang.String" resultMap="authorityMap">
+        SELECT a.* FROM authorities AS a INNER JOIN user_authorities AS ua
+        ON a.id = ua.authority_id
+        WHERE ua.username = #{username}
+    </select>
+
+    <select id="getDefaultAuthority" resultMap="authorityMap">
+        SELECT * FROM authorities AS a WHERE a.default_authority = TRUE
+    </select>
+
+</mapper>
